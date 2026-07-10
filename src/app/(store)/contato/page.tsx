@@ -1,15 +1,10 @@
 "use client";
-import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from 'lucide-react'
-import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'Contato',
-  description: 'Entre em contato com a Terra Mais. Estamos em Gravataí – RS. Telefone, WhatsApp, e-mail e mapa.',
-}
+import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from 'lucide-react';
 
 export default function ContatoPage() {
-  const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '5551999999999'
-  const message = encodeURIComponent('Olá! Gostaria de falar com a Terra Mais 🌿')
+  const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '5551999999999';
+  const message = encodeURIComponent('Olá! Gostaria de falar com a Terra Mais 🌿');
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
@@ -123,8 +118,8 @@ export default function ContatoPage() {
             <form
               className="space-y-4"
               onSubmit={(e) => {
-                e.preventDefault()
-                alert('Mensagem enviada! Entraremos em contato em breve.')
+                e.preventDefault();
+                alert('Mensagem enviada! Entraremos em contato em breve.');
               }}
             >
               <div className="grid grid-cols-2 gap-4">
@@ -160,5 +155,5 @@ export default function ContatoPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
