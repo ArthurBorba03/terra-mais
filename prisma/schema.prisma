@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer Customer?
+  orders   Order[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  phone     String?
+  cpf       String?  @unique
+  birthDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
+
+  @@map("customers")
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  customerId String
+  label      String  @default("Casa")
+  street     String
+  number     String
+  complement String?
+  district   String
+  city       String
+  state      String
+  zipCode    String
+  isDefault  Boolean @default(false)
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orders   Order[]
+
+  @@map("addresses")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  icon        String?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  categoryId    String
+  name          String
+  slug          String   @unique
+  description   String
+  shortDesc     String?
+  price         Decimal  @db.Decimal(10, 2)
+  comparePrice  Decimal? @db.Decimal(10, 2)
+  costPrice     Decimal? @db.Decimal(10, 2)
+  stock         Int      @default(0)
+  sku           String?  @unique
+  weight        Decimal? @db.Decimal(8, 3)
+  images        String[]
+  isActive      Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  isBestseller  Boolean  @default(false)
+  isNew         Boolean  @default(false)
+  isPromotion   Boolean  @default(false)
+  allowExtras   Boolean  @default(false)
+  tags          String[]
+  metaTitle     String?
+  metaDesc      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category     Category    @relation(fields: [categoryId], references: [id])
+  orderItems   OrderItem[]
+  reviews      Review[]
+
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String?
+  customerId      String?
+  addressId       String?
+  status          OrderStatus @default(PENDING)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  shippingCost    Decimal     @db.Decimal(10, 2) @default(0)
+  discount        Decimal     @db.Decimal(10, 2) @default(0)
+  total           Decimal     @db.Decimal(10, 2)
+  couponId        String?
+  couponCode      String?
+  deliveryType    DeliveryType @default(DELIVERY)
+  deliveryDate    DateTime?
+  deliveryTime    String?
+  giftMessage     String?
+  recipientName   String?
+  recipientPhone  String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user      User?     @relation(fields: [userId], references: [id])
+  customer  Customer? @relation(fields: [customerId], references: [id])
+  address   Address?  @relation(fields: [addressId], references: [id])
+  coupon    Coupon?   @relation(fields: [couponId], references: [id])
+  items     OrderItem[]
+  payment   Payment?
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  productImg  String?
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  extras      Json?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Coupon {
+  id           String     @id @default(cuid())
+  code         String     @unique
+  description  String?
+  type         CouponType @default(PERCENTAGE)
+  value        Decimal    @db.Decimal(10, 2)
+  minAmount    Decimal?   @db.Decimal(10, 2)
+  maxDiscount  Decimal?   @db.Decimal(10, 2)
+  usageLimit   Int?
+  usageCount   Int        @default(0)
+  isActive     Boolean    @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime   @default(now())
+
+  orders Order[]
+
+  @@map("coupons")
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+  FREE_SHIPPING
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  amount        Decimal       @db.Decimal(10, 2)
+  externalId    String?
+  pixCode       String?
+  pixQrCode     String?
+  installments  Int           @default(1)
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  productId  String
+  customerId String
+  rating     Int
+  title      String?
+  comment    String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("reviews")
+}
+
+model SiteSettings {
+  id              String  @id @default(cuid())
+  key             String  @unique
+  value           String
+  description     String?
+
+  @@map("site_settings")
+}
