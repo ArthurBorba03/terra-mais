@@ -1,3 +1,4 @@
+"use client";
 import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from 'lucide-react'
 import type { Metadata } from 'next'
 
