@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 }
 
 const milestones = [
-  { year: '2002', title: 'Fundação', desc: 'A Terra Mais nasce com um pequeno espaço e um grande sonho: levar flores e natureza para cada lar.' },
-  { year: '2008', title: 'Expansão', desc: 'Ampliamos nosso espaço físico e passamos a oferecer plantas, adubos e itens de jardinagem.' },
-  { year: '2015', title: 'Delivery', desc: 'Lançamos nosso serviço de entrega em domicílio, chegando a mais cidades da região.' },
-  { year: '2020', title: 'Loja Online', desc: 'Inauguramos nossa loja virtual para atender clientes 24 horas por dia, 7 dias por semana.' },
-  { year: '2024', title: 'Hoje', desc: 'Mai' },
+  { year: '2023', title: 'Fundação', desc: 'A Terra Mais nasce com um pequeno espaço e um grande sonho: levar flores e natureza para cada lar.' },
+  { year: '2024', title: 'Expansão', desc: 'Dando um grande passo, mudamos para um espaço físico com o dobro do tamanho, permitindo ampliar nossa variedade de flores, plantas e arranjos exclusivos.' },
+  { year: '2025', title: 'Tele-entrega', desc: 'Iniciamos o nosso serviço de tele-entrega (teles), garantindo que o carinho e a beleza das nossas flores cheguem com rapidez e segurança diretamente ao seu destino.' },
+  { year: '2026', title: 'Inovação', desc: 'Damos início a uma nova fase com o lançamento da nossa loja virtual, inovando no atendimento para tornar a sua experiência de escolher e presentear ainda mais simples e moderna.' },
+  { year: '2026', title: 'Hoje', desc: 'Jul' },
 ]
 
 const values = [
@@ -50,10 +50,10 @@ export default function SobrePage() {
         <div className="text-center mb-10">
           <h2 className="section-title mb-4">Nossa História</h2>
           <p className="text-gray-600 leading-relaxed text-lg">
-            A Terra Mais nasceu da paixão por flores e pela natureza. Fundada em 2002 na cidade de Gravataí, RS, começamos com um pequeno espaço e um grande sonho: levar beleza, cor e vida para cada lar, celebração e momento especial.
+            A A Terra Mais nasceu da paixão por flores e pela natureza. Fundada em 2023 na cidade de Gravataí, RS, começamos com um pequeno espaço e um grande sonho: levar beleza, cor e vida para cada lar, celebração e momento especial.
           </p>
           <p className="text-gray-600 leading-relaxed text-lg mt-4">
-            Ao longo de mais de duas décadas, crescemos e evoluímos, mas nunca deixamos de lado o cuidado artesanal e o atendimento personalizado que são a nossa marca. Hoje, somos uma referência em flores, plantas e jardinagem na região metropolitana de Porto Alegre.
+            Desde o início, focamos em oferecer um cuidado artesanal e o atendimento personalizado que são a nossa marca. Hoje, temos o orgulho de atender com muito carinho as regiões de Gravataí e Cachoeirinha, sendo uma referência em flores, plantas e jardinagem.
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function SobrePage() {
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="section-title mb-4">Venha nos Visitar!</h2>
           <p className="text-gray-500 mb-8">
-            Nossa loja fica na Avenida Marechal Rondon, 3742 – Vila Fátima, Cachoeirinha – RS. Estamos de portas abertas para receber você!
+            Nossa loja fica na Avenida Marechal Rondon, 3742 – Vila Fátima, Cachoeiringa – RS. Estamos de portas abertas para receber você!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/catalogo" className="btn-primary">
