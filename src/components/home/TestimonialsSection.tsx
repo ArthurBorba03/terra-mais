@@ -20,7 +20,7 @@ export default function TestimonialsSection() {
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="w-6 h-6 fill-amber-400 text-amber-400" />
             ))}
-            <span className="text-gray-600 font-semibold ml-2">5/5 ·</span>
+            <span className="text-gray-600 font-semibold ml-2">5/5 </span>
           </div>
         </div>
 

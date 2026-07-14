@@ -269,11 +269,11 @@ async function main() {
 
   // Criar configurações do site
   const settings = [
-    { key: 'whatsapp', value: '5551999999999', description: 'Número WhatsApp' },
-    { key: 'instagram', value: 'terramais', description: 'Instagram handle' },
-    { key: 'phone', value: '(51) 9 9999-9999', description: 'Telefone loja' },
-    { key: 'address', value: 'Rua das Flores, 123 - Centro, Gravataí - RS', description: 'Endereço' },
-    { key: 'business_hours', value: 'Seg-Sáb: 8h às 19h | Dom: 9h às 13h', description: 'Horário funcionamento' },
+    { key: 'whatsapp', value: '5551992332327', description: 'Número WhatsApp' },
+    { key: 'instagram', value: 'floriculturaterramais', description: 'Instagram handle' },
+    { key: 'phone', value: '(51) 9 9233-2327', description: 'Telefone loja' },
+    { key: 'address', value: 'Avenida Marechal Rondon, 3742 - Vila Fátima, Cachoeirinha - RS', description: 'Endereço' },
+    { key: 'business_hours', value: 'Seg-Sáb: 9h às 18h | Dom: Fechados', description: 'Horário funcionamento' },
     { key: 'delivery_fee', value: '15', description: 'Taxa de entrega padrão' },
     { key: 'free_delivery_min', value: '200', description: 'Valor mínimo frete grátis' },
   ]

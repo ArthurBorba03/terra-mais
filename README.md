@@ -170,7 +170,7 @@ NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY="APP_USR-..."
 
 # WhatsApp e Redes Sociais
 NEXT_PUBLIC_WHATSAPP="5551999999999"
-NEXT_PUBLIC_INSTAGRAM="terramais"
+NEXT_PUBLIC_INSTAGRAM="floriculturaterramais"
 
 # URL da loja
 NEXT_PUBLIC_STORE_URL="https://terramais.com.br"
@@ -335,13 +335,13 @@ Senha:  admin123@TM
 ### WhatsApp
 Botão flutuante configurável via `NEXT_PUBLIC_WHATSAPP`:
 ```
-https://wa.me/5551999999999
+https://wa.me/5551992332327
 ```
 
 ### Instagram
 Link no footer via `NEXT_PUBLIC_INSTAGRAM`:
 ```
-https://instagram.com/terramais
+https://www.instagram.com/floriculturaterramais/
 ```
 
 ### Google Maps
@@ -393,10 +393,10 @@ earth: {
 ### Dados da loja
 Edite as configurações em `prisma/seed.ts`:
 ```ts
-{ key: 'whatsapp',        value: '5551999999999' }
-{ key: 'phone',           value: '(51) 9 9999-9999' }
-{ key: 'address',         value: 'Rua das Flores, 123...' }
-{ key: 'business_hours',  value: 'Seg-Sáb: 8h às 19h' }
+{ key: 'whatsapp',        value: '5551992332327' }
+{ key: 'phone',           value: '(51) 9 9233-2327' }
+{ key: 'address',         value: 'Avenida Marechal Rondon, 3742 - Vila Fátima, Cachoeirinha - RS, 94965-000' }
+{ key: 'business_hours',  value: 'Seg-Sáb: 9h às 18h' }
 ```
 
 ---
@@ -438,9 +438,9 @@ npm run build
 
 ## 📞 Suporte
 
-- **E-mail:** contato@terramais.com.br
-- **WhatsApp:** (51) 9 9999-9999
-- **Instagram:** @terramais
+- **E-mail:** floriculturaterramais@gmail.com
+- **WhatsApp:** (51) 9 9233-2327
+- **Instagram:** @floriculturaterramais
 
 ---
 

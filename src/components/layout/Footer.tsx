@@ -23,8 +23,8 @@ const links = [
 ]
 
 export default function Footer() {
-  const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '5551999999999'
-  const instagram = process.env.NEXT_PUBLIC_INSTAGRAM || 'terramais'
+  const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '5551992332327'
+  const instagram = process.env.NEXT_PUBLIC_INSTAGRAM || 'floriculturaterramais'
 
   return (
     <footer className="bg-brand-900 text-white">
@@ -43,7 +43,7 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-brand-200 text-sm leading-relaxed mb-6">
-              Há mais de 20 anos levando beleza, natureza e emoção para a sua vida através de flores e plantas cuidadosamente selecionadas.
+              Cultivando momentos especiais e conectando pessoas através da beleza única e do carinho que só as flores e plantas conseguem transmitir.
             </p>
             <div className="flex gap-3">
               <a
@@ -116,25 +116,25 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex gap-3 text-sm text-brand-200">
                 <MapPin className="w-4 h-4 text-leaf-400 flex-shrink-0 mt-0.5" />
-                <span>Rua das Flores, 123 – Centro<br />Gravataí – RS, 94000-000</span>
+                <span>Avenida Marechal Rondon, 3742 – Vila Fátima<br />Cachoerinha – RS, 94965-000</span>
               </li>
               <li className="flex gap-3 text-sm text-brand-200">
                 <Phone className="w-4 h-4 text-leaf-400 flex-shrink-0 mt-0.5" />
-                <a href="tel:+5551999999999" className="hover:text-leaf-300 transition-colors">
-                  (51) 9 9999-9999
+                <a href="tel:+5551992332327" className="hover:text-leaf-300 transition-colors">
+                  (51) 9 9233-2327
                 </a>
               </li>
               <li className="flex gap-3 text-sm text-brand-200">
                 <Mail className="w-4 h-4 text-leaf-400 flex-shrink-0 mt-0.5" />
-                <a href="mailto:contato@terramais.com.br" className="hover:text-leaf-300 transition-colors">
-                  contato@terramais.com.br
+                <a href="mailto:floriculturaterramais@gmail.com" className="hover:text-leaf-300 transition-colors">
+                  floriculturaterramais@gmail.com
                 </a>
               </li>
               <li className="flex gap-3 text-sm text-brand-200">
                 <Clock className="w-4 h-4 text-leaf-400 flex-shrink-0 mt-0.5" />
                 <span>
-                  Seg–Sáb: 8h às 19h<br />
-                  Dom: 9h às 13h
+                  Seg–Sáb: 9h às 18h<br />
+                  Dom: Fechados
                 </span>
               </li>
             </ul>

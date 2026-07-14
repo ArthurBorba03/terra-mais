@@ -282,7 +282,7 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-0">
                     {[
                       { value: 'DELIVERY', icon: MapPin, label: 'Entrega em domicílio', desc: `Taxa: ${formatCurrency(shippingCost)}` },
-                      { value: 'PICKUP', icon: Store, label: 'Retirar na loja', desc: 'Grátis • Rua das Flores, 123' },
+                      { value: 'PICKUP', icon: Store, label: 'Retirar na loja', desc: 'Grátis • Avenida Marechal Rondon, 3742' },
                     ].map((opt) => (
                       <button
                         key={opt.value}
@@ -322,23 +322,23 @@ export default function CheckoutPage() {
                       </div>
                       <div className="sm:col-span-2">
                         <label className="text-sm font-medium text-gray-700 block mb-1.5">Rua / Avenida *</label>
-                        <input {...register('address.street')} placeholder="Rua das Flores" className="input-field" />
+                        <input {...register('address.street')} placeholder="Avenida Marechal Rondon" className="input-field" />
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-700 block mb-1.5">Número *</label>
-                        <input {...register('address.number')} placeholder="123" className="input-field" />
+                        <input {...register('address.number')} placeholder="3742" className="input-field" />
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-700 block mb-1.5">Complemento</label>
-                        <input {...register('address.complement')} placeholder="Apto 42" className="input-field" />
+                        <input {...register('address.complement')} placeholder="Apto 1" className="input-field" />
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-700 block mb-1.5">Bairro *</label>
-                        <input {...register('address.district')} placeholder="Centro" className="input-field" />
+                        <input {...register('address.district')} placeholder="Vila Fátima" className="input-field" />
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-700 block mb-1.5">Cidade *</label>
-                        <input {...register('address.city')} placeholder="Gravataí" className="input-field" />
+                        <input {...register('address.city')} placeholder="Cachoeirinha" className="input-field" />
                       </div>
                     </div>
                   </div>

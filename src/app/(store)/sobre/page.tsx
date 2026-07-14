@@ -109,7 +109,7 @@ export default function SobrePage() {
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="section-title mb-4">Venha nos Visitar!</h2>
           <p className="text-gray-500 mb-8">
-            Nossa loja fica na Rua das Flores, 123 – Centro, Gravataí – RS. Estamos de portas abertas para receber você!
+            Nossa loja fica na Avenida Marechal Rondon, 3742 – Vila Fátima, Cachoeirinha – RS. Estamos de portas abertas para receber você!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/catalogo" className="btn-primary">

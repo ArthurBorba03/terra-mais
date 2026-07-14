@@ -15,7 +15,7 @@ export default function PrivacidadePage() {
         {[
           {
             title: '1. Quem Somos',
-            content: 'A Terra Mais Floricultura (CNPJ: XX.XXX.XXX/0001-XX), com sede na Rua das Flores, 123 – Centro, Gravataí – RS, é a controladora dos dados pessoais coletados neste site.',
+            content: 'A Terra Mais Floricultura (CNPJ: 59.197.259/0001-17), com sede na Avenida Marechal Rondon, 3742 – Vila Fátima, Cachoeirinha – RS, é a controladora dos dados pessoais coletados neste site.',
           },
           {
             title: '2. Dados que Coletamos',

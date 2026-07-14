@@ -23,27 +23,27 @@ export default function ContatoPage() {
                 {
                   icon: MapPin,
                   label: 'Endereço',
-                  value: 'Rua das Flores, 123 – Centro\nGravataí – RS, 94000-000',
+                  value: 'Avenida Marechal Rondon, 3742 – Vila Fátima\nCachoeirinha – RS, 94965-000',
                   color: 'text-brand-600 bg-brand-50',
                 },
                 {
                   icon: Phone,
                   label: 'Telefone',
-                  value: '(51) 9 9999-9999',
-                  href: 'tel:+5551999999999',
+                  value: '(51) 9 9233-2327',
+                  href: 'tel:+5551992332327',
                   color: 'text-blue-600 bg-blue-50',
                 },
                 {
                   icon: Mail,
                   label: 'E-mail',
-                  value: 'contato@terramais.com.br',
-                  href: 'mailto:contato@terramais.com.br',
+                  value: 'floriculturaterramais@gmail.com',
+                  href: 'mailto:floriculturaterramais@gmail.com',
                   color: 'text-purple-600 bg-purple-50',
                 },
                 {
                   icon: Clock,
                   label: 'Horário de Funcionamento',
-                  value: 'Segunda a Sábado: 8h às 19h\nDomingo: 9h às 13h',
+                  value: 'Segunda a Sábado: 9h às 18h\nDomingo: Fechados',
                   color: 'text-amber-600 bg-amber-50',
                 },
               ].map((item) => (
