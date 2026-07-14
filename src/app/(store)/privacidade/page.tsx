@@ -35,7 +35,7 @@ export default function PrivacidadePage() {
           },
           {
             title: '6. Seus Direitos (LGPD)',
-            content: 'Você tem direito a: confirmar o tratamento, acessar seus dados, corrigir dados incompletos, solicitar exclusão, revogar consentimento e portabilidade. Entre em contato: privacidade@terramais.com.br',
+            content: 'Você tem direito a: confirmar o tratamento, acessar seus dados, corrigir dados incompletos, solicitar exclusão, revogar consentimento e portabilidade. Entre em contato: floriculturaterramais@gmail.com',
           },
           {
             title: '7. Segurança',
@@ -47,7 +47,7 @@ export default function PrivacidadePage() {
           },
           {
             title: '9. Contato',
-            content: 'Para exercer seus direitos ou esclarecer dúvidas: privacidade@terramais.com.br ou (51) 9 9999-9999.',
+            content: 'Para exercer seus direitos ou esclarecer dúvidas: floriculturaterramais@gmail.com ou (51) 9 9233-2327.',
           },
         ].map((s) => (
           <section key={s.title}>

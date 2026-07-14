@@ -63,11 +63,11 @@ export default function LGPDPage() {
           Para exercer seus direitos ou esclarecer dúvidas sobre proteção de dados, entre em contato com nosso DPO:
         </p>
         <a
-          href="mailto:privacidade@terramais.com.br"
+          href="mailto:floriculturaterramais@gmail.com"
           className="btn-primary inline-flex"
         >
           <Mail className="w-4 h-4" />
-          privacidade@terramais.com.br
+          floriculturaterramais@gmail.com
         </a>
         <p className="text-gray-400 text-xs mt-4">
           Tempo de resposta: até 15 dias úteis, conforme previsto na LGPD.
