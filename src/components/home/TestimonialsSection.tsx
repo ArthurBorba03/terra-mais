@@ -1,12 +1,12 @@
 import { Star, Quote } from 'lucide-react'
 
 const testimonials = [
-  { name: 'Ana Carolina S.', location: 'Gravataí – RS', rating: 5, text: 'As flores chegaram lindíssimas e super frescas! O buquê de rosas foi um sucesso no aniversário da minha mãe. Com certeza comprarei novamente!', date: 'há 2 dias' },
-  { name: 'Roberto M.', location: 'Cachoeirinha – RS', rating: 5, text: 'Entrega pontual e flores de altíssima qualidade. A cesta de presente superou todas as expectativas. Muito obrigado Terra Mais!', date: 'há 1 semana' },
-  { name: 'Juliana F.', location: 'Porto Alegre – RS', rating: 5, text: 'Comprei a orquídea para decorar meu apartamento e ela está florescendo há 3 meses! O atendimento pelo WhatsApp foi excelente também.', date: 'há 2 semanas' },
-  { name: 'Marcos A.', location: 'Gravataí – RS', rating: 5, text: 'Fiz o pedido de madrugada e as flores chegaram pela manhã para a surpresa do Dia das Mães. Minha mãe ficou emocionada. Nota 10!', date: 'há 3 semanas' },
-  { name: 'Fernanda L.', location: 'Alvorada – RS', rating: 5, text: 'O kit de jardinagem que comprei tinha tudo o que precisava e os adubos são de ótima qualidade. Minhas plantas amaram! 🌱', date: 'há 1 mês' },
-  { name: 'Paulo R.', location: 'Canoas – RS', rating: 4, text: 'Ótimo custo-benefício e flores muito bonitas. O site é fácil de usar e o pagamento via PIX foi super rápido. Recomendo!', date: 'há 1 mês' },
+  { name: 'Arthur Gustavo', location: 'Cachoeirinha – RS', rating: 5, text: 'Atendimento excelente, Plantas maravilhosas. Tudo um esétáculo!', date: 'há 4 meses' },
+  { name: 'Luisa Rodrigues', location: 'Cachoeirinha – RS', rating: 5, text: 'Atendimento nota 10, Serviço nota 10, Entrega rápida e produtos de qualidade. Buquês são mais lindos ainda pessoalmente. Quando o espaço e o trabalho são feitos com amor, não tem erro, são extremamente abençoados!', date: 'há 1 mês' },
+  { name: 'Silvinei Alexon', location: 'Gravataí – RS', rating: 5, text: 'Estou aqui para agradecer pelo trabalho, pelo carinho e pela dedicação que vocês tiveram no pedido que ainda incluiu uma carta que editei ás pressas pelo celular e mandei em PDF pedindo para imprimir. Vocês foram sensacionais.', date: 'há 10 meses' },
+  { name: 'Rodrigo Tech', location: 'Gravataí – RS', rating: 5, text: 'Melhor floricultura da região. Preço ótimo e as plantas são lindas e bem cuidadas, e o atendimento é nota 1000', date: 'há 1 ano' },
+  { name: 'Luana Dorneles', location: 'Cachoeirinha – RS', rating: 5, text: 'Quero deixar aqui registrado o ótimo atendimento, desde o primeiro contato e até a compra me trataram muito bem, sempre me dando atenção e mandando fotos do que eu pedia. Super indico nota 10.', date: 'há 1 ano' },
+  { name: 'Valquiria Soares', location: 'Gravataí – RS', rating: 5, text: 'Atendimento top, super recomendo! Vendedor faz do jeito que o cliente pede, explica sobre o produto, manda fotos dos produtos, tudo com muita atenção e paciência, fizeram a tele corretamente. Minha mãe ficou emocionada! Uma pessoa maravilhosa que gosta do que faz!', date: 'há 1 mês' },
 ]
 
 export default function TestimonialsSection() {
