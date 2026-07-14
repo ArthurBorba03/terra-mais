@@ -57,7 +57,7 @@ export default function Header() {
       <div className="bg-brand-700 text-white text-sm py-2 text-center px-4">
         <span className="flex items-center justify-center gap-2 flex-wrap">
           <Phone className="w-3.5 h-3.5" />
-          <span>Entrega no mesmo dia para pedidos até 14h &bull; Ligue: (51) 9 9999-9999</span>
+          <span>Entrega no mesmo dia para pedidos até 14h &bull; Ligue: (51) 9 9233-2327</span>
         </span>
       </div>
 

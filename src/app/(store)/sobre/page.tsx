@@ -13,7 +13,7 @@ const milestones = [
   { year: '2008', title: 'Expansão', desc: 'Ampliamos nosso espaço físico e passamos a oferecer plantas, adubos e itens de jardinagem.' },
   { year: '2015', title: 'Delivery', desc: 'Lançamos nosso serviço de entrega em domicílio, chegando a mais cidades da região.' },
   { year: '2020', title: 'Loja Online', desc: 'Inauguramos nossa loja virtual para atender clientes 24 horas por dia, 7 dias por semana.' },
-  { year: '2024', title: 'Hoje', desc: 'Mais de 10.000 clientes satisfeitos e uma equipe apaixonada por flores, plantas e natureza.' },
+  { year: '2024', title: 'Hoje', desc: 'Mai' },
 ]
 
 const values = [

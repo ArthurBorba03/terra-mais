@@ -15,12 +15,12 @@ export default function TestimonialsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <h2 className="section-title">O que dizem nossos clientes</h2>
-          <p className="section-subtitle">Mais de 10.000 clientes satisfeitos em todo o Rio Grande do Sul</p>
+          <p className="section-subtitle">★★★★★ Compromisso com a sua satisfação</p>
           <div className="flex items-center justify-center gap-2 mt-4">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="w-6 h-6 fill-amber-400 text-amber-400" />
             ))}
-            <span className="text-gray-600 font-semibold ml-2">4.9/5 · 2.847 avaliações</span>
+            <span className="text-gray-600 font-semibold ml-2">5/5 ·</span>
           </div>
         </div>
 
