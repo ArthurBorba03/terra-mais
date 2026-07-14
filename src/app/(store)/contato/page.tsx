@@ -4,7 +4,7 @@ import { MapPin, Phone, Mail, Clock, Instagram, MessageCircle } from 'lucide-rea
 
 export default function ContatoPage() {
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '5551999999999';
-  const message = encodeURIComponent('Olá! Gostaria de falar com a Terra Mais 🌿');
+  const message = encodeURIComponent('Olá! Gostaria de falar com a Floricultura Terra Mais...');
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
@@ -82,7 +82,7 @@ export default function ContatoPage() {
               </div>
             </a>
             <a
-              href={`https://instagram.com/${process.env.NEXT_PUBLIC_INSTAGRAM || 'terramais'}`}
+              href={`https://www.instagram.com/floriculturaterramais/${process.env.NEXT_PUBLIC_INSTAGRAM || 'floriculturaterramais'}`}
               target="_blank"
               rel="noopener noreferrer"
               className="card p-5 flex flex-col items-center gap-3 text-center hover:-translate-y-1 transition-transform"
