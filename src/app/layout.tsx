@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   description:
     'Floricultura Terra Mais: flores frescas, plantas, buquês, vasos, adubos e muito mais. Entrega no mesmo dia em Gravataí e região.',
   keywords: ['floricultura', 'flores', 'plantas', 'buquês', 'rosas', 'vasos', 'jardinagem', 'Gravataí', 'Rio Grande do Sul'],
+  icons: {
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌱</text></svg>',
+  },
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
