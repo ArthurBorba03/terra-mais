@@ -10,6 +10,18 @@ export async function POST(req: NextRequest) {
     const { email, password } = loginSchema.parse(body)
 
     const user = await prisma.user.findUnique({ where: { email } })
+
+    // === LOGS DE TESTE ===
+    console.log("=== TENTATIVA DE LOGIN ===")
+    console.log("Email digitado:", email)
+    console.log("Usuário encontrado no banco?", user ? "SIM" : "NÃO")
+    if (user) {
+      console.log("Nome do usuário:", user.name)
+      console.log("Hash no banco:", user.password)
+    }
+    console.log("==========================")
+    // =====================
+
     if (!user) return NextResponse.json({ success: false, error: 'Credenciais inválidas' }, { status: 401 })
 
     const valid = await bcrypt.compare(password, user.password)
