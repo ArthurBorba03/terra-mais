@@ -290,3 +290,17 @@ async function main() {
 main()
   .catch((e) => { console.error(e); process.exit(1) })
   .finally(async () => { await prisma.$disconnect() })
+
+// Criar admin Patricia
+const hashedPattyPassword = await bcrypt.hash('10082001', 12)
+const patricia = await prisma.user.upsert({
+  where: { email: 'patty100801@gmail.com' },
+  update: {},
+  create: {
+    name: 'Patricia',
+    email: 'patty100801@gmail.com',
+    password: hashedPattyPassword,
+    role: Role.ADMIN,
+  },
+})
+console.log('✅ Patricia criada:', patricia.email)
