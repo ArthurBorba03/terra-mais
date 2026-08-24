@@ -1,50 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { signToken } from '@/lib/auth'
-import { loginSchema } from '@/lib/validations'
 import bcrypt from 'bcryptjs'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, password } = loginSchema.parse(body)
+    const { email, password } = body
 
-    const user = await prisma.user.findUnique({ where: { email } })
-
-    // === LOGS DE TESTE ===
-    console.log("=== TENTATIVA DE LOGIN ===")
-    console.log("Email digitado:", email)
-    console.log("Usuário encontrado no banco?", user ? "SIM" : "NÃO")
-    if (user) {
-      console.log("Nome do usuário:", user.name)
-      console.log("Hash no banco:", user.password)
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, error: 'E-mail e senha são obrigatórios' },
+        { status: 400 }
+      )
     }
-    console.log("==========================")
-    // =====================
 
-    if (!user) return NextResponse.json({ success: false, error: 'Credenciais inválidas' }, { status: 401 })
+    // Buscar usuário pelo e-mail (lowercase para evitar erros de digitação)
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    })
 
-    const valid = await bcrypt.compare(password, user.password)
-    if (!valid) return NextResponse.json({ success: false, error: 'Credenciais inválidas' }, { status: 401 })
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'E-mail ou senha incorretos' },
+        { status: 401 }
+      )
+    }
 
-    const token = await signToken({ userId: user.id, email: user.email, role: user.role })
+    // Comparar senha com o hash salvo
+    const senhaCorreta = await bcrypt.compare(password, user.password)
+    if (!senhaCorreta) {
+      return NextResponse.json(
+        { success: false, error: 'E-mail ou senha incorretos' },
+        { status: 401 }
+      )
+    }
 
+    // Gerar token JWT
+    const token = await signToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    })
+
+    // Criar resposta com cookie seguro
     const response = NextResponse.json({
       success: true,
-      data: { id: user.id, name: user.name, email: user.email, role: user.role },
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     })
 
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 7, // 7 dias
       path: '/',
     })
 
     return response
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Erro no login'
-    return NextResponse.json({ success: false, error: msg }, { status: 400 })
+    console.error('[ERRO LOGIN]', err)
+    return NextResponse.json(
+      { success: false, error: 'Erro interno. Tente novamente.' },
+      { status: 500 }
+    )
   }
 }

@@ -1,9 +1,10 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 
-const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'terra-mais-secret-key-change-in-production'
-)
+function getSecret() {
+  const s = process.env.JWT_SECRET || 'terra-mais-fallback-secret-2025-dev'
+  return new TextEncoder().encode(s)
+}
 
 export interface JWTPayload {
   userId: string
@@ -12,33 +13,40 @@ export interface JWTPayload {
 }
 
 export async function signToken(payload: JWTPayload): Promise<string> {
-  return new SignJWT({ ...payload })
+  const { userId, email, role } = payload
+  return new SignJWT({ userId, email, role })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(secret)
+    .sign(getSecret())
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secret)
-    return payload as unknown as JWTPayload
+    const { payload } = await jwtVerify(token, getSecret())
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      role: payload.role as 'ADMIN' | 'CUSTOMER',
+    }
   } catch {
     return null
   }
 }
 
 export async function getAuthUser(): Promise<JWTPayload | null> {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')?.value
-  if (!token) return null
-  return verifyToken(token)
+  try {
+    const store = await cookies()
+    const token = store.get('auth-token')?.value
+    if (!token) return null
+    return verifyToken(token)
+  } catch {
+    return null
+  }
 }
 
 export async function requireAdmin(): Promise<JWTPayload> {
   const user = await getAuthUser()
-  if (!user || user.role !== 'ADMIN') {
-    throw new Error('Unauthorized')
-  }
+  if (!user || user.role !== 'ADMIN') throw new Error('Unauthorized')
   return user
 }

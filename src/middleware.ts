@@ -4,21 +4,32 @@ import { verifyToken } from '@/lib/auth'
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Protect admin routes (except login)
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const token = req.cookies.get('auth-token')?.value
+  // Nunca bloquear a página de login nem a API de login
+  if (
+    pathname === '/admin/login' ||
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/products') ||
+    pathname.startsWith('/api/categories') ||
+    pathname.startsWith('/api/reviews') ||
+    pathname.startsWith('/api/coupons/validate')
+  ) {
+    return NextResponse.next()
+  }
 
+  // Proteger páginas /admin/*
+  if (pathname.startsWith('/admin')) {
+    const token = req.cookies.get('auth-token')?.value
     if (!token) {
       return NextResponse.redirect(new URL('/admin/login', req.url))
     }
-
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/admin/login', req.url))
     }
+    return NextResponse.next()
   }
 
-  // Protect admin API routes
+  // Proteger APIs /api/admin/*
   if (pathname.startsWith('/api/admin')) {
     const token = req.cookies.get('auth-token')?.value
     if (!token) {
@@ -26,27 +37,14 @@ export async function middleware(req: NextRequest) {
     }
     const payload = await verifyToken(token)
     if (!payload || payload.role !== 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 })
     }
+    return NextResponse.next()
   }
 
-  // Rate limiting headers (basic)
-  const response = NextResponse.next()
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set(
-    'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(self)'
-  )
-
-  return response
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    '/admin/:path*',
-    '/api/admin/:path*',
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
-  ],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 }
