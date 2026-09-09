@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Link, ImagePlus, X, Loader2, CheckCircle } from 'lucide-react'
+import { useState, useRef, useCallback } from 'react'
+import { ImagePlus, X, Loader2, CheckCircle, Link, AlertCircle } from 'lucide-react'
 
 interface Props {
   images: string[]
@@ -9,172 +9,193 @@ interface Props {
 }
 
 interface ImageItem {
-  url: string          // URL final (ImgBB)
-  preview: string      // URL local temporária para preview instantâneo
+  id: string
+  url: string
+  preview: string
   status: 'uploading' | 'done' | 'error'
   progress: number
+  errorMsg?: string
+}
+
+// Comprime imagem no navegador (sem servidor)
+async function compressImage(file: File, maxWidth = 1200, quality = 0.82): Promise<Blob> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      let { width, height } = img
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width)
+        width = maxWidth
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      URL.revokeObjectURL(url)
+      canvas.toBlob((blob) => resolve(blob!), 'image/webp', quality)
+    }
+    img.src = url
+  })
+}
+
+// Upload via API interna do Next.js
+async function uploadImage(
+  blob: Blob,
+  fileName: string,
+  onProgress: (p: number) => void
+): Promise<string> {
+  onProgress(20)
+  const formData = new FormData()
+  formData.append('file', blob, fileName)
+  onProgress(50)
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  })
+
+  onProgress(90)
+  const data = await res.json()
+
+  if (!data.success) throw new Error(data.error || 'Erro no upload')
+  onProgress(100)
+  return data.url
 }
 
 export default function ImageUpload({ images, onChange }: Props) {
-  const [items, setItems] = useState<ImageItem[]>(
-    images.map((url) => ({ url, preview: url, status: 'done', progress: 100 }))
+  const [items, setItems] = useState<ImageItem[]>(() =>
+    images.map((url, i) => ({
+      id: `existing-${i}`,
+      url,
+      preview: url,
+      status: 'done',
+      progress: 100,
+    }))
   )
   const [urlInput, setUrlInput] = useState('')
-  const [erro, setErro] = useState('')
+  const [urlErro, setUrlErro] = useState('')
+  const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // Sincronizar com o form quando items muda
-  function syncImages(newItems: ImageItem[]) {
-    setItems(newItems)
-    // Só passa URLs que terminaram o upload
+  function syncToForm(newItems: ImageItem[]) {
     onChange(newItems.filter((i) => i.status === 'done').map((i) => i.url))
   }
 
-  // Comprime a imagem antes de enviar (reduz até 80% do tamanho)
-  function compressImage(file: File, maxWidth = 1200, quality = 0.8): Promise<string> {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')!
-      const img = new Image()
-      const url = URL.createObjectURL(file)
+  const processFiles = useCallback(
+    async (files: File[]) => {
+      if (!files.length) return
 
-      img.onload = () => {
-        // Calcular novo tamanho mantendo proporção
-        let { width, height } = img
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width)
-          width = maxWidth
-        }
-
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
-
-        URL.revokeObjectURL(url)
-        resolve(canvas.toDataURL('image/jpeg', quality))
-      }
-
-      img.src = url
-    })
-  }
-
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || [])
-    if (!files.length) return
-
-    const key = process.env.NEXT_PUBLIC_IMGBB_KEY
-    if (!key) {
-      setErro('Chave ImgBB não configurada')
-      return
-    }
-
-    setErro('')
-
-    for (const file of files) {
-      // 1. Mostrar preview local IMEDIATAMENTE (antes do upload)
-      const localPreview = URL.createObjectURL(file)
-      const newItem: ImageItem = {
+      const newItems: ImageItem[] = files.map((f) => ({
+        id: `upload-${Date.now()}-${Math.random()}`,
         url: '',
-        preview: localPreview,
-        status: 'uploading',
+        preview: URL.createObjectURL(f),
+        status: 'uploading' as const,
         progress: 0,
-      }
+      }))
 
-      // Adicionar o item com status "uploading"
       setItems((prev) => {
-        const updated = [...prev, newItem]
+        const updated = [...prev, ...newItems]
         return updated
       })
 
-      try {
-        // 2. Comprimir a imagem (mais rápido para enviar)
-        const compressed = await compressImage(file)
-        const base64 = compressed.split(',')[1]
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const item = newItems[i]
 
-        // Simular progresso enquanto envia
-        setItems((prev) =>
-          prev.map((item) =>
-            item.preview === localPreview ? { ...item, progress: 30 } : item
+        try {
+          // Comprimir antes de enviar
+          const compressed = await compressImage(file)
+
+          const url = await uploadImage(
+            compressed,
+            `produto-${Date.now()}.webp`,
+            (progress) => {
+              setItems((prev) =>
+                prev.map((it) =>
+                  it.id === item.id ? { ...it, progress } : it
+                )
+              )
+            }
           )
-        )
 
-        // 3. Enviar para ImgBB
-        const form = new FormData()
-        form.append('image', base64)
-        form.append('key', key)
-
-        setItems((prev) =>
-          prev.map((item) =>
-            item.preview === localPreview ? { ...item, progress: 60 } : item
-          )
-        )
-
-        const res = await fetch('https://api.imgbb.com/1/upload', {
-          method: 'POST',
-          body: form,
-        })
-
-        const data = await res.json()
-
-        if (data.success) {
-          // 4. Substituir preview local pela URL final
           setItems((prev) => {
-            const updated = prev.map((item) =>
-              item.preview === localPreview
-                ? { url: data.data.url, preview: data.data.url, status: 'done' as const, progress: 100 }
-                : item
+            const updated = prev.map((it) =>
+              it.id === item.id
+                ? { ...it, url, status: 'done' as const, progress: 100 }
+                : it
             )
-            onChange(updated.filter((i) => i.status === 'done').map((i) => i.url))
+            syncToForm(updated)
+            URL.revokeObjectURL(item.preview)
             return updated
           })
-          URL.revokeObjectURL(localPreview)
-        } else {
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Erro no upload'
           setItems((prev) =>
-            prev.map((item) =>
-              item.preview === localPreview
-                ? { ...item, status: 'error', progress: 0 }
-                : item
+            prev.map((it) =>
+              it.id === item.id
+                ? { ...it, status: 'error' as const, progress: 0, errorMsg: msg }
+                : it
             )
           )
-          setErro('Erro ao enviar imagem. Tente novamente.')
         }
-      } catch {
-        setItems((prev) =>
-          prev.map((item) =>
-            item.preview === localPreview
-              ? { ...item, status: 'error', progress: 0 }
-              : item
-          )
-        )
-        setErro('Erro de conexão. Verifique sua internet.')
       }
-    }
 
-    if (fileRef.current) fileRef.current.value = ''
+      if (fileRef.current) fileRef.current.value = ''
+    },
+    []
+  )
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    processFiles(Array.from(e.target.files || []))
   }
 
-  function handleRemove(index: number) {
-    const newItems = items.filter((_, i) => i !== index)
-    syncImages(newItems)
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragOver(false)
+    const files = Array.from(e.dataTransfer.files).filter((f) =>
+      f.type.startsWith('image/')
+    )
+    processFiles(files)
+  }
+
+  function handleRemove(id: string) {
+    setItems((prev) => {
+      const updated = prev.filter((it) => it.id !== id)
+      syncToForm(updated)
+      return updated
+    })
+  }
+
+  function handleRetry(id: string) {
+    // Remove o item com erro para tentar de novo
+    setItems((prev) => prev.filter((it) => it.id !== id))
   }
 
   function handleAddUrl() {
+    setUrlErro('')
     if (!urlInput.trim()) return
     if (!urlInput.startsWith('http')) {
-      setErro('URL inválida. Deve começar com http://')
+      setUrlErro('URL inválida')
       return
     }
     const newItem: ImageItem = {
+      id: `url-${Date.now()}`,
       url: urlInput.trim(),
       preview: urlInput.trim(),
       status: 'done',
       progress: 100,
     }
-    const newItems = [...items, newItem]
-    syncImages(newItems)
+    setItems((prev) => {
+      const updated = [...prev, newItem]
+      syncToForm(updated)
+      return updated
+    })
     setUrlInput('')
-    setErro('')
   }
+
+  const uploadingCount = items.filter((i) => i.status === 'uploading').length
 
   return (
     <div>
@@ -183,41 +204,46 @@ export default function ImageUpload({ images, onChange }: Props) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
             gap: '10px',
             marginBottom: '16px',
           }}
         >
-          {items.map((item, i) => (
+          {items.map((item, idx) => (
             <div
-              key={i}
+              key={item.id}
               style={{
                 position: 'relative',
                 aspectRatio: '1',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 background: '#f3f4f6',
-                border: item.status === 'error'
-                  ? '2px solid #dc2626'
-                  : item.status === 'uploading'
-                  ? '2px solid #2a7030'
-                  : '2px solid #e5e7eb',
+                border:
+                  item.status === 'error'
+                    ? '2px solid #ef4444'
+                    : item.status === 'uploading'
+                    ? '2px dashed #2a7030'
+                    : '2px solid #e5e7eb',
+                transition: 'border-color 0.2s',
               }}
             >
-              {/* Imagem (preview local ou URL final) */}
               <img
                 src={item.preview}
-                alt={`Foto ${i + 1}`}
+                alt={`Foto ${idx + 1}`}
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
-                  opacity: item.status === 'uploading' ? 0.6 : 1,
+                  opacity: item.status === 'uploading' ? 0.5 : 1,
                   transition: 'opacity 0.3s',
+                }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f3f4f6' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='12'%3ESem foto%3C/text%3E%3C/svg%3E"
                 }}
               />
 
-              {/* Overlay de upload */}
+              {/* Overlay upload */}
               {item.status === 'uploading' && (
                 <div
                   style={{
@@ -228,121 +254,128 @@ export default function ImageUpload({ images, onChange }: Props) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    background: 'rgba(0,0,0,0.3)',
+                    background: 'rgba(0,0,0,0.35)',
                   }}
                 >
                   <Loader2
                     style={{
-                      width: 24,
-                      height: 24,
+                      width: 22,
+                      height: 22,
                       color: '#fff',
-                      animation: 'spin 1s linear infinite',
+                      animation: 'imgup-spin 1s linear infinite',
                     }}
                   />
-                  {/* Barra de progresso */}
                   <div
                     style={{
-                      width: '70%',
-                      height: '4px',
+                      width: '65%',
+                      height: '3px',
                       background: 'rgba(255,255,255,0.3)',
                       borderRadius: '2px',
-                      overflow: 'hidden',
                     }}
                   >
                     <div
                       style={{
                         height: '100%',
                         width: `${item.progress}%`,
-                        background: '#fff',
+                        background: '#4ade80',
                         borderRadius: '2px',
-                        transition: 'width 0.5s ease',
+                        transition: 'width 0.4s ease',
                       }}
                     />
                   </div>
-                  <span style={{ color: '#fff', fontSize: '10px', fontWeight: 600 }}>
-                    Enviando...
+                  <span style={{ color: '#fff', fontSize: '9px', fontWeight: 700 }}>
+                    {item.progress}%
                   </span>
                 </div>
               )}
 
-              {/* Overlay de erro */}
+              {/* Overlay erro */}
               {item.status === 'error' && (
                 <div
                   style={{
                     position: 'absolute',
                     inset: 0,
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'rgba(220,38,38,0.7)',
-                    fontSize: '11px',
-                    color: '#fff',
-                    fontWeight: 600,
-                    textAlign: 'center',
+                    gap: '4px',
+                    background: 'rgba(220,38,38,0.75)',
+                    cursor: 'pointer',
                     padding: '4px',
                   }}
+                  onClick={() => handleRetry(item.id)}
+                  title="Clique para remover e tentar de novo"
                 >
-                  Erro! Tente novamente
+                  <AlertCircle style={{ width: 20, height: 20, color: '#fff' }} />
+                  <span style={{ color: '#fff', fontSize: '9px', fontWeight: 700, textAlign: 'center' }}>
+                    Erro — clique para remover
+                  </span>
                 </div>
               )}
 
-              {/* Ícone de sucesso */}
+              {/* Check de sucesso */}
               {item.status === 'done' && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: '4px',
-                    left: '4px',
-                    background: '#1e5522',
+                    top: 4,
+                    left: 4,
+                    background: '#16a34a',
                     borderRadius: '50%',
-                    padding: '2px',
-                    opacity: 0.9,
+                    width: 18,
+                    height: 18,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <CheckCircle style={{ width: 14, height: 14, color: '#fff' }} />
+                  <CheckCircle style={{ width: 12, height: 12, color: '#fff' }} />
                 </div>
               )}
 
               {/* Botão remover */}
-              <button
-                type="button"
-                onClick={() => handleRemove(i)}
-                style={{
-                  position: 'absolute',
-                  top: '4px',
-                  right: '4px',
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '50%',
-                  background: '#dc2626',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                }}
-              >
-                <X style={{ width: 12, height: 12 }} />
-              </button>
+              {item.status !== 'uploading' && (
+                <button
+                  type="button"
+                  onClick={() => handleRemove(item.id)}
+                  style={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    background: '#dc2626',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <X style={{ width: 11, height: 11, color: '#fff' }} />
+                </button>
+              )}
 
-              {/* Badge "Principal" */}
-              {i === 0 && item.status === 'done' && (
+              {/* Badge principal */}
+              {idx === 0 && item.status === 'done' && (
                 <div
                   style={{
                     position: 'absolute',
-                    bottom: '4px',
-                    left: '4px',
+                    bottom: 4,
+                    left: 4,
                     background: '#1e5522',
                     color: '#fff',
-                    fontSize: '9px',
+                    fontSize: '8px',
                     fontWeight: 700,
                     padding: '2px 6px',
-                    borderRadius: '6px',
+                    borderRadius: '5px',
+                    letterSpacing: '0.5px',
                   }}
                 >
-                  Principal
+                  PRINCIPAL
                 </div>
               )}
             </div>
@@ -350,7 +383,7 @@ export default function ImageUpload({ images, onChange }: Props) {
         </div>
       )}
 
-      {/* Input de arquivo oculto */}
+      {/* Input oculto */}
       <input
         ref={fileRef}
         type="file"
@@ -360,16 +393,18 @@ export default function ImageUpload({ images, onChange }: Props) {
         style={{ display: 'none' }}
       />
 
-      {/* Botão escolher do computador */}
-      <button
-        type="button"
+      {/* Área de drop / clique */}
+      <div
         onClick={() => fileRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
         style={{
           width: '100%',
-          padding: '20px',
-          border: '2px dashed #bbf7d0',
-          borderRadius: '12px',
-          background: '#f0fdf4',
+          padding: '22px 16px',
+          border: `2px dashed ${dragOver ? '#1e5522' : '#bbf7d0'}`,
+          borderRadius: '14px',
+          background: dragOver ? '#dcfce7' : '#f0fdf4',
           cursor: 'pointer',
           display: 'flex',
           flexDirection: 'column',
@@ -377,24 +412,37 @@ export default function ImageUpload({ images, onChange }: Props) {
           gap: '8px',
           marginBottom: '12px',
           transition: 'all 0.2s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = '#2a7030'
-          e.currentTarget.style.background = '#dcfce7'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = '#bbf7d0'
-          e.currentTarget.style.background = '#f0fdf4'
+          userSelect: 'none',
         }}
       >
-        <ImagePlus style={{ width: 30, height: 30, color: '#2a7030' }} />
-        <span style={{ fontSize: '14px', color: '#2a7030', fontWeight: 600 }}>
-          Clique para escolher foto do computador
-        </span>
-        <span style={{ fontSize: '12px', color: '#6b7280' }}>
-          JPG, PNG, WEBP — pode selecionar várias de uma vez
-        </span>
-      </button>
+        {uploadingCount > 0 ? (
+          <>
+            <Loader2
+              style={{
+                width: 28,
+                height: 28,
+                color: '#2a7030',
+                animation: 'imgup-spin 1s linear infinite',
+              }}
+            />
+            <span style={{ fontSize: '14px', color: '#2a7030', fontWeight: 600 }}>
+              Enviando {uploadingCount} foto{uploadingCount > 1 ? 's' : ''}...
+            </span>
+          </>
+        ) : (
+          <>
+            <ImagePlus style={{ width: 30, height: 30, color: '#2a7030' }} />
+            <span style={{ fontSize: '14px', color: '#2a7030', fontWeight: 600 }}>
+              {dragOver
+                ? 'Solte as fotos aqui!'
+                : 'Clique ou arraste fotos aqui'}
+            </span>
+            <span style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center' }}>
+              JPG, PNG, WEBP • Pode selecionar várias de uma vez
+            </span>
+          </>
+        )}
+      </div>
 
       {/* Campo URL */}
       <div style={{ display: 'flex', gap: '8px' }}>
@@ -402,11 +450,11 @@ export default function ImageUpload({ images, onChange }: Props) {
           <Link
             style={{
               position: 'absolute',
-              left: '12px',
+              left: 11,
               top: '50%',
               transform: 'translateY(-50%)',
-              width: 15,
-              height: 15,
+              width: 14,
+              height: 14,
               color: '#9ca3af',
             }}
           />
@@ -414,20 +462,25 @@ export default function ImageUpload({ images, onChange }: Props) {
             type="url"
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddUrl())}
-            placeholder="Ou cole um link de imagem da internet..."
+            onKeyDown={(e) =>
+              e.key === 'Enter' && (e.preventDefault(), handleAddUrl())
+            }
+            placeholder="Ou cole um link de imagem..."
             style={{
               width: '100%',
-              padding: '10px 12px 10px 34px',
-              border: '1.5px solid #e5e7eb',
+              padding: '10px 12px 10px 32px',
+              border: `1.5px solid ${urlErro ? '#ef4444' : '#e5e7eb'}`,
               borderRadius: '10px',
               fontSize: '13px',
               outline: 'none',
               boxSizing: 'border-box' as const,
               color: '#111',
+              background: '#fff',
             }}
             onFocus={(e) => (e.target.style.borderColor = '#2a7030')}
-            onBlur={(e) => (e.target.style.borderColor = '#e5e7eb')}
+            onBlur={(e) =>
+              (e.target.style.borderColor = urlErro ? '#ef4444' : '#e5e7eb')
+            }
           />
         </div>
         <button
@@ -448,16 +501,14 @@ export default function ImageUpload({ images, onChange }: Props) {
           Adicionar
         </button>
       </div>
-
-      {/* Erro */}
-      {erro && (
-        <p style={{ color: '#dc2626', fontSize: '12px', marginTop: '8px' }}>
-          ⚠️ {erro}
+      {urlErro && (
+        <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+          {urlErro}
         </p>
       )}
 
       <style>{`
-        @keyframes spin {
+        @keyframes imgup-spin {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
