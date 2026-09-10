@@ -244,9 +244,7 @@ function LoginForm() {
             lineHeight: 1.8,
           }}
         >
-          <strong>Credenciais padrão:</strong><br />
-          <span style={{ fontFamily: 'monospace' }}></span><br />
-          <span style={{ fontFamily: 'monospace' }}></span>
+         
         </div>
       </div>
 
