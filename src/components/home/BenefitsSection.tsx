@@ -4,13 +4,13 @@ const benefits = [
   {
     icon: Truck,
     title: 'Entrega Expressa',
-    desc: 'Pedidos até 14h entregues no mesmo dia com muito cuidado e pontualidade.',
+    desc: 'Pedidos entregues no mesmo dia com muito cuidado e pontualidade.',
     color: 'bg-blue-50 text-blue-600',
   },
   {
     icon: Clock,
-    title: 'Sempre Frescas',
-    desc: 'Trabalhamos com flores colhidas diariamente para garantir máxima durabilidade.',
+    title: 'Muita Qualidade',
+    desc: 'Flores selecionadas a dedo todos os dias para garantir o máximo de durabilidade no seu arranjo.',
     color: 'bg-green-50 text-green-600',
   },
   {
@@ -27,14 +27,14 @@ const benefits = [
   },
   {
     icon: Award,
-    title: '20 Anos de Tradição',
-    desc: 'Mais de duas décadas levando beleza e emoção para milhares de famílias.',
+    title: 'Detalhes que impressionam',
+    desc: 'Embalagens especiais, cartões personalizados e uma apresentação impecável para encantar quem recebe.',
     color: 'bg-amber-50 text-amber-600',
   },
   {
     icon: Phone,
-    title: 'Suporte 24h',
-    desc: 'Nossa equipe está sempre disponível via WhatsApp para tirar suas dúvidas.',
+    title: 'Acompanhamento Rápido',
+    desc: 'Suporte direto via WhatsApp para orientar sua compra, personalizações e detalhes da entrega.',
     color: 'bg-teal-50 text-teal-600',
   },
 ]

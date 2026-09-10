@@ -245,8 +245,8 @@ function LoginForm() {
           }}
         >
           <strong>Credenciais padrão:</strong><br />
-          <span style={{ fontFamily: 'monospace' }}>admin@terramais.com.br</span><br />
-          <span style={{ fontFamily: 'monospace' }}>admin123@TM</span>
+          <span style={{ fontFamily: 'monospace' }}></span><br />
+          <span style={{ fontFamily: 'monospace' }}></span>
         </div>
       </div>
 
