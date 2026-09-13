@@ -16,16 +16,27 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_STORE_URL || 'https://terramais.com.br'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_STORE_URL || 'https://terramais.com.br'
+  ),
   title: {
     default: 'Terra Mais – Flores, Plantas e Jardins',
     template: '%s | Terra Mais',
   },
   description:
     'Floricultura Terra Mais: flores frescas, plantas, buquês, vasos, adubos e muito mais. Entrega no mesmo dia em Gravataí e região.',
-  keywords: ['floricultura', 'flores', 'plantas', 'buquês', 'rosas', 'vasos', 'jardinagem', 'Gravataí', 'Rio Grande do Sul'],
+  keywords: [
+    'floricultura', 'flores', 'plantas', 'buquês', 'rosas',
+    'vasos', 'jardinagem', 'Gravataí', 'Rio Grande do Sul',
+  ],
   icons: {
-    icon: 'ChatGPT Image 9_09_2026, 21_28_22',
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    shortcut: '/icon.png',
   },
   openGraph: {
     type: 'website',
@@ -33,29 +44,57 @@ export const metadata: Metadata = {
     url: '/',
     siteName: 'Terra Mais',
     title: 'Terra Mais – Flores, Plantas e Jardins',
-    description: 'Floricultura com flores frescas, plantas, buquês e muito mais. Entrega no mesmo dia.',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Terra Mais Floricultura' }],
+    description:
+      'Floricultura com flores frescas, plantas, buquês e muito mais. Entrega no mesmo dia.',
+    images: [
+      {
+        url: '/icon.png',
+        width: 1200,
+        height: 630,
+        alt: 'Terra Mais Floricultura',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Terra Mais – Flores, Plantas e Jardins',
-    description: 'Floricultura com flores frescas, plantas, buquês e muito mais.',
+    description:
+      'Floricultura com flores frescas, plantas, buquês e muito mais.',
+    images: ['/icon.png'],
   },
   robots: { index: true, follow: true },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="pt-BR" className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+        <link rel="icon" href="/icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/icon.png" />
+        <link rel="shortcut icon" href="/icon.png" type="image/png" />
+      </head>
       <body>
         {children}
         <Toaster
           position="top-right"
           toastOptions={{
             duration: 3000,
-            style: { background: '#1e5522', color: '#fff', borderRadius: '12px', fontFamily: 'var(--font-inter)' },
-            success: { iconTheme: { primary: '#5caa5c', secondary: '#fff' } },
-            error: { style: { background: '#dc2626' } },
+            style: {
+              background: '#1e5522',
+              color: '#fff',
+              borderRadius: '12px',
+              fontFamily: 'var(--font-inter)',
+            },
+            success: {
+              iconTheme: { primary: '#5caa5c', secondary: '#fff' },
+            },
+            error: {
+              style: { background: '#dc2626' },
+            },
           }}
         />
       </body>
