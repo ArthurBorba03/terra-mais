@@ -31,12 +31,13 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/icon.png', type: 'image/png' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png', sizes: '192x192' },
     ],
     apple: [
       { url: '/icon.png', type: 'image/png' },
     ],
-    shortcut: '/icon.png',
+    shortcut: '/icon.svg',
   },
   openGraph: {
     type: 'website',
@@ -46,36 +47,26 @@ export const metadata: Metadata = {
     title: 'Terra Mais – Flores, Plantas e Jardins',
     description:
       'Floricultura com flores frescas, plantas, buquês e muito mais. Entrega no mesmo dia.',
-    images: [
-      {
-        url: '/icon.png',
-        width: 1200,
-        height: 630,
-        alt: 'Terra Mais Floricultura',
-      },
-    ],
+    images: [{ url: '/icon.png', width: 512, height: 512, alt: 'Terra Mais Floricultura' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Terra Mais – Flores, Plantas e Jardins',
-    description:
-      'Floricultura com flores frescas, plantas, buquês e muito mais.',
+    description: 'Floricultura com flores frescas, plantas, buquês e muito mais.',
     images: ['/icon.png'],
   },
   robots: { index: true, follow: true },
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <link rel="icon" href="/icon.png" type="image/png" />
+        {/* SVG — melhor qualidade em qualquer tamanho */}
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        {/* PNG — fallback para navegadores que não suportam SVG */}
+        <link rel="icon" href="/icon.png" type="image/png" sizes="192x192" />
         <link rel="apple-touch-icon" href="/icon.png" />
-        <link rel="shortcut icon" href="/icon.png" type="image/png" />
       </head>
       <body>
         {children}
@@ -89,12 +80,8 @@ export default function RootLayout({
               borderRadius: '12px',
               fontFamily: 'var(--font-inter)',
             },
-            success: {
-              iconTheme: { primary: '#5caa5c', secondary: '#fff' },
-            },
-            error: {
-              style: { background: '#dc2626' },
-            },
+            success: { iconTheme: { primary: '#5caa5c', secondary: '#fff' } },
+            error: { style: { background: '#dc2626' } },
           }}
         />
       </body>
