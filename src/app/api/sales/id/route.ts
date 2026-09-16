@@ -17,13 +17,14 @@ const updateSchema = z.object({
   soldAt:        z.string().optional(),
 })
 
-type Params = { params: { id: string } }
-
 // ── GET ───────────────────────────────────────────────────────
-export async function GET(req: NextRequest, context: Params) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await requireAdmin()
-    const { id } = context.params
+    const { id } = await params
     const sale = await prisma.sale.findUnique({ where: { id } })
     if (!sale) {
       return NextResponse.json({ success: false, error: 'Venda não encontrada' }, { status: 404 })
@@ -42,10 +43,13 @@ export async function GET(req: NextRequest, context: Params) {
 }
 
 // ── PUT ───────────────────────────────────────────────────────
-export async function PUT(req: NextRequest, context: Params) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await requireAdmin()
-    const { id } = context.params
+    const { id } = await params
 
     const existing = await prisma.sale.findUnique({ where: { id } })
     if (!existing) {
@@ -83,10 +87,13 @@ export async function PUT(req: NextRequest, context: Params) {
 }
 
 // ── DELETE ────────────────────────────────────────────────────
-export async function DELETE(req: NextRequest, context: Params) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await requireAdmin()
-    const { id } = context.params
+    const { id } = await params
 
     const existing = await prisma.sale.findUnique({ where: { id } })
     if (!existing) {
