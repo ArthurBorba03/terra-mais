@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, RefreshCw, Loader2, TrendingUp, ShoppingBag, Package, X, Search } from 'lucide-react'
+import {
+  Plus, RefreshCw, Loader2, TrendingUp, ShoppingBag,
+  Package, X, Search, Edit, Trash2, AlertTriangle,
+} from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
@@ -38,16 +41,16 @@ interface Product {
 
 // ── Constantes ────────────────────────────────────────────────
 const FILTER_TABS = [
-  { value: 'day',   label: 'Hoje' },
-  { value: 'week',  label: 'Esta Semana' },
-  { value: 'month', label: 'Este Mês' },
-  { value: 'custom',label: 'Período' },
+  { value: 'day',    label: 'Hoje' },
+  { value: 'week',   label: 'Esta Semana' },
+  { value: 'month',  label: 'Este Mês' },
+  { value: 'custom', label: 'Período' },
 ]
 
 const TYPE_TABS = [
   { value: 'all',        label: 'Todas' },
-  { value: 'ONLINE',     label: 'Online' },
-  { value: 'PRESENTIAL', label: 'Presencial' },
+  { value: 'ONLINE',     label: '🌐 Site' },
+  { value: 'PRESENTIAL', label: '🏪 Balcão' },
 ]
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -57,17 +60,22 @@ const PAYMENT_LABELS: Record<string, string> = {
   DEBIT_CARD:  '💳 Débito',
 }
 
-// ── Componente principal ──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 export default function VendasPage() {
-  const [sales, setSales]       = useState<Sale[]>([])
-  const [meta, setMeta]         = useState<Meta | null>(null)
-  const [loading, setLoading]   = useState(true)
-  const [filter, setFilter]     = useState('month')
-  const [typeFilter, setType]   = useState('all')
-  const [from, setFrom]         = useState('')
-  const [to, setTo]             = useState('')
-  const [search, setSearch]     = useState('')
-  const [showModal, setModal]   = useState(false)
+  const [sales, setSales]     = useState<Sale[]>([])
+  const [meta, setMeta]       = useState<Meta | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter]   = useState('month')
+  const [typeFilter, setType] = useState('all')
+  const [from, setFrom]       = useState('')
+  const [to, setTo]           = useState('')
+  const [search, setSearch]   = useState('')
+
+  // Modais
+  const [showCreate, setShowCreate]           = useState(false)
+  const [editSale, setEditSale]               = useState<Sale | null>(null)
+  const [deleteSale, setDeleteSale]           = useState<Sale | null>(null)
+  const [deleteLoading, setDeleteLoading]     = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -90,6 +98,23 @@ export default function VendasPage() {
     (s.customerName || '').toLowerCase().includes(search.toLowerCase())
   )
 
+  // ── Excluir venda ─────────────────────────────────────────
+  async function handleDelete() {
+    if (!deleteSale) return
+    setDeleteLoading(true)
+    try {
+      const res = await fetch(`/api/sales/${deleteSale.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+      setDeleteSale(null)
+      load()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao excluir')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -102,7 +127,7 @@ export default function VendasPage() {
           <button onClick={load} className="btn-secondary text-sm py-2 px-4 flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
           </button>
-          <button onClick={() => setModal(true)} className="btn-primary text-sm py-2 px-5 flex items-center gap-2">
+          <button onClick={() => setShowCreate(true)} className="btn-primary text-sm py-2 px-5 flex items-center gap-2">
             <Plus className="w-4 h-4" /> Criar Venda
           </button>
         </div>
@@ -112,9 +137,9 @@ export default function VendasPage() {
       {meta && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { icon: TrendingUp, label: 'Faturamento',  value: formatCurrency(meta.totalRevenue), color: 'bg-green-600' },
-            { icon: ShoppingBag, label: 'Vendas',      value: String(meta.totalSales),           color: 'bg-blue-600' },
-            { icon: Package,    label: 'Itens Vendidos', value: String(meta.totalItems),          color: 'bg-purple-600' },
+            { icon: TrendingUp,  label: 'Faturamento',   value: formatCurrency(meta.totalRevenue), color: 'bg-green-600' },
+            { icon: ShoppingBag, label: 'Vendas',         value: String(meta.totalSales),           color: 'bg-blue-600' },
+            { icon: Package,     label: 'Itens Vendidos', value: String(meta.totalItems),            color: 'bg-purple-600' },
           ].map((c) => (
             <div key={c.label} className="card p-5">
               <div className={`w-10 h-10 ${c.color} rounded-xl flex items-center justify-center mb-3`}>
@@ -127,10 +152,9 @@ export default function VendasPage() {
         </div>
       )}
 
-      {/* Filtros de período */}
+      {/* Filtros */}
       <div className="card p-4">
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Período */}
           <div className="flex gap-2 overflow-x-auto">
             {FILTER_TABS.map((tab) => (
               <button
@@ -138,9 +162,7 @@ export default function VendasPage() {
                 onClick={() => setFilter(tab.value)}
                 className={cn(
                   'px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0',
-                  filter === tab.value
-                    ? 'bg-brand-700 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  filter === tab.value ? 'bg-brand-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 )}
               >
                 {tab.label}
@@ -148,30 +170,17 @@ export default function VendasPage() {
             ))}
           </div>
 
-          {/* Período personalizado */}
           {filter === 'custom' && (
             <div className="flex items-center gap-2 flex-wrap">
-              <input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="input-field text-sm py-2 w-auto"
-              />
+              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="input-field text-sm py-2 w-auto" />
               <span className="text-gray-400 text-sm">até</span>
-              <input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="input-field text-sm py-2 w-auto"
-              />
+              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input-field text-sm py-2 w-auto" />
               <button onClick={load} className="btn-primary text-sm py-2 px-4">Filtrar</button>
             </div>
           )}
 
-          {/* Separador */}
           <div className="h-6 w-px bg-gray-200 hidden sm:block" />
 
-          {/* Tipo */}
           <div className="flex gap-2">
             {TYPE_TABS.map((tab) => (
               <button
@@ -180,7 +189,7 @@ export default function VendasPage() {
                 className={cn(
                   'px-3 py-2 rounded-xl text-xs font-medium transition-colors',
                   typeFilter === tab.value
-                    ? tab.value === 'ONLINE'     ? 'bg-blue-100 text-blue-700'
+                    ? tab.value === 'ONLINE' ? 'bg-blue-100 text-blue-700'
                     : tab.value === 'PRESENTIAL' ? 'bg-amber-100 text-amber-700'
                     : 'bg-brand-700 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -222,8 +231,8 @@ export default function VendasPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {['Produto', 'Data', 'Cliente', 'Qtd', 'Valor Unit.', 'Total', 'Pagamento', 'Origem'].map((h) => (
-                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  {['Produto', 'Data', 'Cliente', 'Qtd', 'Valor Unit.', 'Total', 'Pagamento', 'Origem', 'Ações'].map((h) => (
+                    <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -233,7 +242,7 @@ export default function VendasPage() {
                 {filtered.map((sale) => (
                   <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
                     {/* Produto */}
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center text-lg">
                           {sale.productImg
@@ -241,17 +250,17 @@ export default function VendasPage() {
                             : '🌸'
                           }
                         </div>
-                        <span className="font-medium text-gray-800 max-w-[180px] truncate">{sale.productName}</span>
+                        <span className="font-medium text-gray-800 max-w-[160px] truncate">{sale.productName}</span>
                       </div>
                     </td>
 
                     {/* Data */}
-                    <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
                       {formatDate(sale.soldAt)}
                     </td>
 
                     {/* Cliente */}
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       {sale.customerName
                         ? <div>
                             <p className="font-medium text-gray-700 text-sm">{sale.customerName}</p>
@@ -262,80 +271,151 @@ export default function VendasPage() {
                     </td>
 
                     {/* Qtd */}
-                    <td className="px-5 py-4 text-center">
+                    <td className="px-4 py-3 text-center">
                       <span className="badge bg-gray-100 text-gray-700">{sale.quantity}</span>
                     </td>
 
                     {/* Valor unit */}
-                    <td className="px-5 py-4 text-gray-600 text-sm">{formatCurrency(sale.unitPrice)}</td>
+                    <td className="px-4 py-3 text-gray-600 text-sm">{formatCurrency(sale.unitPrice)}</td>
 
                     {/* Total */}
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <span className="font-bold text-brand-700">{formatCurrency(sale.total)}</span>
                     </td>
 
                     {/* Pagamento */}
-                    <td className="px-5 py-4 text-xs text-gray-600 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
                       {PAYMENT_LABELS[sale.paymentMethod] || sale.paymentMethod}
                     </td>
 
                     {/* Origem */}
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <span className={cn(
                         'badge text-xs',
-                        sale.type === 'ONLINE'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-amber-100 text-amber-700'
+                        sale.type === 'ONLINE' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
                       )}>
                         {sale.type === 'ONLINE' ? '🌐 Site' : '🏪 Balcão'}
                       </span>
+                    </td>
+
+                    {/* Ações */}
+                    <td className="px-4 py-3">
+                      {sale.type === 'PRESENTIAL' ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setEditSale(sale)}
+                            className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                            title="Editar venda"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteSale(sale)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Excluir venda"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-300 italic">–</span>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
-            {/* Rodapé da tabela */}
+            {/* Rodapé */}
             <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50 text-sm text-gray-500">
-              <span>{filtered.length} venda{filtered.length !== 1 ? 's' : ''} exibida{filtered.length !== 1 ? 's' : ''}</span>
-              {meta && (
-                <span className="font-semibold text-brand-700">
-                  Total: {formatCurrency(filtered.reduce((s, v) => s + v.total, 0))}
-                </span>
-              )}
+              <span>{filtered.length} venda{filtered.length !== 1 ? 's' : ''}</span>
+              <span className="font-semibold text-brand-700">
+                Total: {formatCurrency(filtered.reduce((s, v) => s + v.total, 0))}
+              </span>
             </div>
           </div>
         )}
       </div>
 
       {/* Modal criar venda */}
-      {showModal && (
-        <CreateSaleModal
-          onClose={() => setModal(false)}
-          onCreated={() => { setModal(false); load() }}
+      {showCreate && (
+        <SaleModal
+          onClose={() => setShowCreate(false)}
+          onSaved={() => { setShowCreate(false); load() }}
         />
+      )}
+
+      {/* Modal editar venda */}
+      {editSale && (
+        <SaleModal
+          sale={editSale}
+          onClose={() => setEditSale(null)}
+          onSaved={() => { setEditSale(null); load() }}
+        />
+      )}
+
+      {/* Modal confirmar exclusão */}
+      {deleteSale && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteSale(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-zoom-in">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-7 h-7 text-red-500" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-bold text-gray-800">Excluir Venda?</h3>
+                <p className="text-gray-500 text-sm mt-1">
+                  A venda de <strong>{deleteSale.productName}</strong> será excluída permanentemente.
+                </p>
+              </div>
+              <div className="flex gap-3 w-full mt-2">
+                <button onClick={() => setDeleteSale(null)} className="btn-secondary flex-1">Cancelar</button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteLoading}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
 }
 
-// ── Modal de criar venda presencial ──────────────────────────
-function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+// ── Modal criar / editar venda ────────────────────────────────
+function SaleModal({
+  sale,
+  onClose,
+  onSaved,
+}: {
+  sale?: Sale | null
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const isEdit = !!sale
   const [products, setProducts]     = useState<Product[]>([])
   const [saving, setSaving]         = useState(false)
   const [erro, setErro]             = useState('')
   const [searchProd, setSearchProd] = useState('')
   const [selectedProd, setSelected] = useState<Product | null>(null)
 
-  // Form
-  const [productName,  setProductName]  = useState('')
-  const [quantity,     setQuantity]     = useState(1)
-  const [unitPrice,    setUnitPrice]    = useState('')
-  const [customerName, setCustomerName] = useState('')
-  const [customerPhone,setCustomerPhone]= useState('')
-  const [paymentMethod,setPayment]      = useState('CASH')
-  const [soldAt,       setSoldAt]       = useState(new Date().toISOString().split('T')[0])
-  const [notes,        setNotes]        = useState('')
+  // Campos do form — iniciados com dados da venda se for edição
+  const [productName,   setProductName]   = useState(sale?.productName || '')
+  const [quantity,      setQuantity]      = useState(sale?.quantity || 1)
+  const [unitPrice,     setUnitPrice]     = useState(sale ? String(sale.unitPrice) : '')
+  const [customerName,  setCustomerName]  = useState(sale?.customerName || '')
+  const [customerPhone, setCustomerPhone] = useState(sale?.customerPhone || '')
+  const [paymentMethod, setPayment]       = useState(sale?.paymentMethod || 'CASH')
+  const [soldAt,        setSoldAt]        = useState(
+    sale ? sale.soldAt.split('T')[0] : new Date().toISOString().split('T')[0]
+  )
+  const [notes, setNotes] = useState(sale?.notes || '')
 
   const total = quantity * (parseFloat(unitPrice) || 0)
 
@@ -359,26 +439,29 @@ function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
     setSaving(true)
     try {
-      const res = await fetch('/api/sales', {
-        method: 'POST',
+      const url    = isEdit ? `/api/sales/${sale!.id}` : '/api/sales'
+      const method = isEdit ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productId:    selectedProd?.id,
-          productName:  productName.trim(),
-          productImg:   selectedProd?.images?.[0] || null,
+          productId:     selectedProd?.id || undefined,
+          productName:   productName.trim(),
+          productImg:    selectedProd?.images?.[0] || undefined,
           quantity,
-          unitPrice:    parseFloat(unitPrice),
+          unitPrice:     parseFloat(unitPrice),
           total,
-          customerName: customerName || undefined,
-          customerPhone:customerPhone || undefined,
+          customerName:  customerName || undefined,
+          customerPhone: customerPhone || undefined,
           paymentMethod,
-          notes:        notes || undefined,
-          soldAt:       soldAt ? new Date(soldAt).toISOString() : undefined,
+          notes:         notes || undefined,
+          soldAt:        soldAt ? new Date(soldAt).toISOString() : undefined,
         }),
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error || 'Erro ao salvar')
-      onCreated()
+      onSaved()
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao salvar')
     } finally {
@@ -395,17 +478,24 @@ function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreate
     borderRadius: 10, fontSize: 14, color: '#111', outline: 'none',
     boxSizing: 'border-box', background: '#fff', ...extra,
   })
-  const lbl: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }
+  const lbl: React.CSSProperties = {
+    display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6,
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-zoom-in">
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div>
-            <h2 className="font-display text-xl font-bold text-gray-800">Criar Venda Presencial</h2>
-            <p className="text-gray-500 text-sm mt-0.5">Registrar venda realizada no balcão</p>
+            <h2 className="font-display text-xl font-bold text-gray-800">
+              {isEdit ? 'Editar Venda' : 'Criar Venda Presencial'}
+            </h2>
+            <p className="text-gray-500 text-sm mt-0.5">
+              {isEdit ? 'Altere os dados da venda' : 'Registrar venda realizada no balcão'}
+            </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
             <X className="w-5 h-5 text-gray-500" />
@@ -420,20 +510,23 @@ function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             </div>
           )}
 
-          {/* Buscar produto */}
+          {/* Produto */}
           <div>
             <label style={lbl}>Produto *</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
-                placeholder="Buscar produto do catálogo..."
+                placeholder="Buscar produto do catálogo ou digitar livremente..."
                 value={searchProd || productName}
-                onChange={(e) => { setSearchProd(e.target.value); setProductName(e.target.value); setSelected(null) }}
+                onChange={(e) => {
+                  setSearchProd(e.target.value)
+                  setProductName(e.target.value)
+                  setSelected(null)
+                }}
                 style={{ ...inp(), paddingLeft: 34 }}
                 onFocus={(e) => (e.target.style.borderColor = '#2a7030')}
                 onBlur={(e) => (e.target.style.borderColor = '#e5e7eb')}
               />
-              {/* Dropdown de produtos */}
               {searchProd && filteredProds.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-48 overflow-y-auto">
                   {filteredProds.map((p) => (
@@ -458,9 +551,9 @@ function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreate
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-1.5">
-              {selectedProd ? `✅ Produto selecionado: ${selectedProd.name}` : 'Selecione um produto do catálogo ou digite livremente'}
-            </p>
+            {selectedProd && (
+              <p className="text-xs text-green-600 mt-1.5">✅ {selectedProd.name} selecionado</p>
+            )}
           </div>
 
           {/* Quantidade e preço */}
@@ -493,7 +586,7 @@ function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             </div>
           </div>
 
-          {/* Total calculado */}
+          {/* Total */}
           {total > 0 && (
             <div className="bg-brand-50 rounded-xl px-4 py-3 flex items-center justify-between">
               <span className="text-sm text-brand-700 font-medium">Total da Venda</span>
@@ -501,7 +594,7 @@ function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             </div>
           )}
 
-          {/* Data da venda */}
+          {/* Data */}
           <div>
             <label style={lbl}>Data da Venda *</label>
             <input
@@ -586,14 +679,10 @@ function CreateSaleModal({ onClose, onCreated }: { onClose: () => void; onCreate
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1">Cancelar</button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="btn-primary flex-1"
-          >
+          <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
             {saving
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
-              : '✅ Registrar Venda'
+              : isEdit ? '💾 Salvar Alterações' : '✅ Registrar Venda'
             }
           </button>
         </div>
