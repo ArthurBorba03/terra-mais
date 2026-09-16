@@ -17,41 +17,45 @@ const updateSchema = z.object({
   soldAt:        z.string().optional(),
 })
 
-// ── GET — buscar venda por ID ─────────────────────────────────
-export async function GET(
-  _: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Params = { params: { id: string } }
+
+// ── GET ───────────────────────────────────────────────────────
+export async function GET(req: NextRequest, context: Params) {
   try {
     await requireAdmin()
-    const { id } = await params
+    const { id } = context.params
     const sale = await prisma.sale.findUnique({ where: { id } })
-    if (!sale) return NextResponse.json({ success: false, error: 'Venda não encontrada' }, { status: 404 })
+    if (!sale) {
+      return NextResponse.json({ success: false, error: 'Venda não encontrada' }, { status: 404 })
+    }
     return NextResponse.json({
       success: true,
       data: { ...sale, unitPrice: Number(sale.unitPrice), total: Number(sale.total) },
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erro'
-    if (msg === 'Unauthorized') return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    if (msg === 'Unauthorized') {
+      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    }
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
 }
 
-// ── PUT — editar venda ────────────────────────────────────────
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// ── PUT ───────────────────────────────────────────────────────
+export async function PUT(req: NextRequest, context: Params) {
   try {
     await requireAdmin()
-    const { id } = await params
+    const { id } = context.params
 
-    // Apenas vendas presenciais podem ser editadas
     const existing = await prisma.sale.findUnique({ where: { id } })
-    if (!existing) return NextResponse.json({ success: false, error: 'Venda não encontrada' }, { status: 404 })
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Venda não encontrada' }, { status: 404 })
+    }
     if (existing.type === 'ONLINE') {
-      return NextResponse.json({ success: false, error: 'Vendas do site não podem ser editadas aqui' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Vendas do site não podem ser editadas aqui' },
+        { status: 400 }
+      )
     }
 
     const body = await req.json()
@@ -71,31 +75,37 @@ export async function PUT(
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erro ao editar'
-    if (msg === 'Unauthorized') return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    if (msg === 'Unauthorized') {
+      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    }
     return NextResponse.json({ success: false, error: msg }, { status: 400 })
   }
 }
 
-// ── DELETE — excluir venda ────────────────────────────────────
-export async function DELETE(
-  _: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// ── DELETE ────────────────────────────────────────────────────
+export async function DELETE(req: NextRequest, context: Params) {
   try {
     await requireAdmin()
-    const { id } = await params
+    const { id } = context.params
 
     const existing = await prisma.sale.findUnique({ where: { id } })
-    if (!existing) return NextResponse.json({ success: false, error: 'Venda não encontrada' }, { status: 404 })
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Venda não encontrada' }, { status: 404 })
+    }
     if (existing.type === 'ONLINE') {
-      return NextResponse.json({ success: false, error: 'Vendas do site não podem ser excluídas aqui' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Vendas do site não podem ser excluídas aqui' },
+        { status: 400 }
+      )
     }
 
     await prisma.sale.delete({ where: { id } })
     return NextResponse.json({ success: true, message: 'Venda excluída com sucesso' })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erro ao excluir'
-    if (msg === 'Unauthorized') return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    if (msg === 'Unauthorized') {
+      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    }
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
 }
