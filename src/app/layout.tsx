@@ -17,7 +17,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_STORE_URL || 'https://terramais.com.br'
+    process.env.NEXT_PUBLIC_STORE_URL || 'https://floriculturaterramais.com.br'
   ),
   title: {
     default: 'Terra Mais – Flores, Plantas e Jardins',

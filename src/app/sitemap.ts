@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_STORE_URL || 'https://terramais.com.br'
+  const baseUrl = process.env.NEXT_PUBLIC_STORE_URL || 'https://floriculturaterramais.com.br'
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
