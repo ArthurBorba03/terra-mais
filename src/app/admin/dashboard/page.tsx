@@ -1,38 +1,62 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { TrendingUp, ShoppingBag, Package, Users, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw } from 'lucide-react'
-import { formatCurrency, formatDateTime, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/utils'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import {
+  TrendingUp, ShoppingBag, Package, Users,
+  RefreshCw, Loader2, Plus, Ticket, BarChart2,
+  Store, Truck,
+} from 'lucide-react'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
-interface DashStats {
-  totalRevenue: number
-  totalOrders: number
-  totalProducts: number
-  totalCustomers: number
-  revenueGrowth: number
-  avgTicket: number
-  recentOrders: Array<{ id: string; orderNumber: string; status: string; total: number; createdAt: string }>
-  topProducts: Array<{ productId: string; productName: string; total: number }>
+interface DashboardData {
+  kpis: {
+    receitaMes:    number
+    totalPedidos:  number
+    produtosAtivos:number
+    totalClientes: number
+  }
+  pedidosRecentes: {
+    id:           string
+    orderNumber:  string
+    status:       string
+    total:        number
+    createdAt:    string
+    deliveryType: string
+  }[]
+  topProdutos: {
+    id:           string
+    name:         string
+    totalVendas:  number
+  }[]
+}
+
+const STATUS_LABEL: Record<string, { label: string; color: string }> = {
+  PENDING:           { label: 'Pendente',    color: 'bg-yellow-100 text-yellow-700' },
+  CONFIRMED:         { label: 'Confirmado',  color: 'bg-blue-100 text-blue-700' },
+  PREPARING:         { label: 'Preparando',  color: 'bg-purple-100 text-purple-700' },
+  OUT_FOR_DELIVERY:  { label: 'Em entrega',  color: 'bg-orange-100 text-orange-700' },
+  DELIVERED:         { label: 'Entregue',    color: 'bg-green-100 text-green-700' },
+  CANCELLED:         { label: 'Cancelado',   color: 'bg-red-100 text-red-700' },
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashStats | null>(null)
+  const [data, setData]       = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/admin/dashboard')
-      const data = await res.json()
-      if (data.success) setStats(data.data)
+      const d   = await res.json()
+      if (d.success) setData(d.data)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   if (loading) {
     return (
@@ -42,12 +66,7 @@ export default function DashboardPage() {
     )
   }
 
-  const cards = [
-    { label: 'Receita do Mês', value: formatCurrency(stats?.totalRevenue || 0), icon: TrendingUp, growth: stats?.revenueGrowth || 0, color: 'bg-brand-50 text-brand-700', iconBg: 'bg-brand-700' },
-    { label: 'Total de Pedidos', value: String(stats?.totalOrders || 0), icon: ShoppingBag, growth: 0, color: 'bg-blue-50 text-blue-700', iconBg: 'bg-blue-600' },
-    { label: 'Produtos Ativos', value: String(stats?.totalProducts || 0), icon: Package, growth: 0, color: 'bg-purple-50 text-purple-700', iconBg: 'bg-purple-600' },
-    { label: 'Clientes', value: String(stats?.totalCustomers || 0), icon: Users, growth: 0, color: 'bg-amber-50 text-amber-700', iconBg: 'bg-amber-500' },
-  ]
+  const { kpis, pedidosRecentes, topProdutos } = data!
 
   return (
     <div className="space-y-6">
@@ -57,86 +76,208 @@ export default function DashboardPage() {
           <h1 className="font-display text-2xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-gray-500 text-sm mt-0.5">Visão geral da loja em tempo real</p>
         </div>
-        <button onClick={load} className="btn-secondary text-sm py-2 px-4 flex items-center gap-2">
-          <RefreshCw className="w-4 h-4" /> Atualizar
+        <button
+          onClick={load}
+          disabled={loading}
+          className="btn-secondary text-sm py-2 px-4 flex items-center gap-2"
+        >
+          <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+          Atualizar
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        {cards.map((card) => (
-          <div key={card.label} className="card p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center`}>
-                <card.icon className="w-5 h-5 text-white" />
-              </div>
-              {card.growth !== 0 && (
-                <span className={cn('flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg', card.growth > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700')}>
-                  {card.growth > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                  {Math.abs(card.growth)}%
-                </span>
-              )}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            icon:  TrendingUp,
+            label: 'RECEITA DO MÊS',
+            value: formatCurrency(kpis.receitaMes),
+            color: 'bg-brand-600',
+            sub:   'Pedidos confirmados + entregues',
+          },
+          {
+            icon:  ShoppingBag,
+            label: 'TOTAL DE PEDIDOS',
+            value: String(kpis.totalPedidos),
+            color: 'bg-blue-600',
+            sub:   'Este mês',
+          },
+          {
+            icon:  Package,
+            label: 'PRODUTOS ATIVOS',
+            value: String(kpis.produtosAtivos),
+            color: 'bg-purple-600',
+            sub:   'No catálogo',
+          },
+          {
+            icon:  Users,
+            label: 'CLIENTES',
+            value: String(kpis.totalClientes),
+            color: 'bg-orange-500',
+            sub:   'Cadastrados',
+          },
+        ].map((c) => (
+          <div key={c.label} className="card p-5">
+            <div className={`w-10 h-10 ${c.color} rounded-xl flex items-center justify-center mb-4`}>
+              <c.icon className="w-5 h-5 text-white" />
             </div>
-            <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">{card.label}</p>
-            <p className="font-display text-2xl font-bold text-gray-800">{card.value}</p>
+            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">{c.label}</p>
+            <p className="font-display text-2xl font-bold text-gray-800">{c.value}</p>
+            <p className="text-xs text-gray-400 mt-1">{c.sub}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Orders */}
-        <div className="lg:col-span-2 card overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-            <h2 className="font-display font-bold text-gray-800">Pedidos Recentes</h2>
-            <Link href="/admin/pedidos" className="text-sm text-brand-700 hover:text-brand-800 font-medium">Ver todos →</Link>
+      {/* Grid central */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Pedidos Recentes */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-display font-bold text-gray-800 text-lg">Pedidos Recentes</h2>
+            <Link href="/admin/pedidos" className="text-sm text-brand-600 font-medium hover:underline">
+              Ver todos →
+            </Link>
           </div>
-          <div className="divide-y divide-gray-50">
-            {stats?.recentOrders.length === 0 && (
-              <p className="text-gray-400 text-sm text-center py-10">Nenhum pedido ainda</p>
-            )}
-            {stats?.recentOrders.map((order) => (
-              <Link key={order.id} href={`/admin/pedidos/${order.id}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 text-sm">{order.orderNumber}</p>
-                  <p className="text-gray-400 text-xs mt-0.5">{formatDateTime(order.createdAt)}</p>
-                </div>
-                <span className={cn('badge text-xs', ORDER_STATUS_COLORS[order.status])}>{ORDER_STATUS_LABELS[order.status]}</span>
-                <span className="font-bold text-brand-700 text-sm flex-shrink-0">{formatCurrency(order.total)}</span>
-              </Link>
-            ))}
-          </div>
+
+          {pedidosRecentes.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <ShoppingBag className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">Nenhum pedido ainda</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pedidosRecentes.map((p) => {
+                const st = STATUS_LABEL[p.status] || { label: p.status, color: 'bg-gray-100 text-gray-600' }
+                return (
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                    {/* Ícone entrega vs retirada */}
+                    <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      {p.deliveryType === 'DELIVERY'
+                        ? <Truck className="w-4 h-4 text-gray-500" />
+                        : <Store className="w-4 h-4 text-gray-500" />
+                      }
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-xs font-bold text-gray-700 truncate">{p.orderNumber}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-gray-400">{formatDate(p.createdAt)}</p>
+                        <span className="text-gray-200">·</span>
+                        <span className="text-xs text-gray-500">
+                          {p.deliveryType === 'DELIVERY' ? '🚚 Entrega' : '🏪 Retirada'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={cn('text-xs px-2 py-1 rounded-lg font-medium', st.color)}>
+                        {st.label}
+                      </span>
+                      <span className="font-bold text-gray-700 text-sm">
+                        {formatCurrency(p.total)}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Top Products */}
-        <div className="card overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100">
-            <h2 className="font-display font-bold text-gray-800">Mais Vendidos</h2>
+        {/* Mais Vendidos */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="font-display font-bold text-gray-800 text-lg">Mais Vendidos</h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Pedidos confirmados + vendas do balcão
+              </p>
+            </div>
+            <Link href="/admin/vendas" className="text-sm text-brand-600 font-medium hover:underline">
+              Ver vendas →
+            </Link>
           </div>
-          <div className="divide-y divide-gray-50">
-            {stats?.topProducts.map((p, i) => (
-              <div key={p.productId} className="flex items-center gap-4 px-6 py-4">
-                <span className="w-7 h-7 bg-brand-50 text-brand-700 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-700 text-sm line-clamp-1">{p.productName}</p>
+
+          {topProdutos.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">Nenhuma venda registrada</p>
+              <p className="text-xs mt-1">Vendas canceladas não são contabilizadas</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topProdutos.map((p, i) => (
+                <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  {/* Ranking */}
+                  <div className={cn(
+                    'w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0',
+                    i === 0 ? 'bg-yellow-100 text-yellow-700' :
+                    i === 1 ? 'bg-gray-100 text-gray-600' :
+                    i === 2 ? 'bg-orange-100 text-orange-700' :
+                    'bg-gray-50 text-gray-400'
+                  )}>
+                    {i + 1}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-800 text-sm truncate">{p.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {p.totalVendas} unidade{p.totalVendas !== 1 ? 's' : ''} vendida{p.totalVendas !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+
+                  {/* Barra de progresso visual */}
+                  <div className="w-20 flex-shrink-0">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-brand-500 rounded-full"
+                        style={{
+                          width: `${Math.round((p.totalVendas / (topProdutos[0]?.totalVendas || 1)) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-right text-gray-400 mt-1 font-medium">
+                      {Math.round((p.totalVendas / (topProdutos[0]?.totalVendas || 1)) * 100)}%
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500 flex-shrink-0">{p.total} vendas</span>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+
+          {/* Legenda */}
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-brand-500 inline-block" />
+              Inclui pedidos confirmados
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Store className="w-3 h-3" />
+              + vendas do balcão
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Quick Links */}
+      {/* Atalhos rápidos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Novo Produto', href: '/admin/produtos/new', emoji: '➕' },
-          { label: 'Ver Pedidos', href: '/admin/pedidos', emoji: '📦' },
-          { label: 'Gerenciar Cupons', href: '/admin/cupons', emoji: '🎫' },
-          { label: 'Ver Relatórios', href: '/admin/relatorios', emoji: '📊' },
-        ].map((l) => (
-          <Link key={l.href} href={l.href} className="card p-5 flex flex-col items-center gap-2 text-center hover:-translate-y-1 transition-transform">
-            <span className="text-2xl">{l.emoji}</span>
-            <span className="text-sm font-semibold text-gray-700">{l.label}</span>
+          { href: '/admin/produtos/new', icon: Plus,      label: 'Novo Produto',      color: 'text-brand-600 bg-brand-50' },
+          { href: '/admin/pedidos',      icon: ShoppingBag,label: 'Ver Pedidos',       color: 'text-blue-600 bg-blue-50' },
+          { href: '/admin/cupons',       icon: Ticket,    label: 'Gerenciar Cupons',  color: 'text-yellow-600 bg-yellow-50' },
+          { href: '/admin/relatorios',   icon: BarChart2,  label: 'Ver Relatórios',   color: 'text-purple-600 bg-purple-50' },
+        ].map((a) => (
+          <Link
+            key={a.href}
+            href={a.href}
+            className="card p-5 flex flex-col items-center gap-3 hover:shadow-md transition-shadow group"
+          >
+            <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110', a.color)}>
+              <a.icon className="w-6 h-6" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 text-center">{a.label}</span>
           </Link>
         ))}
       </div>

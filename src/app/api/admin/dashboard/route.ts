@@ -1,65 +1,134 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth'
+import { OrderStatus } from '@prisma/client'
 
 export async function GET() {
   try {
     await requireAdmin()
 
-    const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
+    const now   = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    // Status que contam como venda concluída (tipados pelo Prisma)
+    const VALID_STATUS: OrderStatus[] = [
+      OrderStatus.CONFIRMED,
+      OrderStatus.PREPARING,
+      OrderStatus.OUT_FOR_DELIVERY,
+      OrderStatus.DELIVERED,
+    ]
 
     const [
-      totalOrders,
-      monthOrders,
-      lastMonthOrders,
-      totalProducts,
-      totalCustomers,
-      recentOrders,
-      topProductsRaw,
+      receitaMes,
+      totalPedidos,
+      produtosAtivos,
+      totalClientes,
+      pedidosRecentes,
+      orderItems,
+      balcaoSales,
     ] = await Promise.all([
-      prisma.order.count({ where: { status: { not: 'CANCELLED' } } }),
-      prisma.order.findMany({ where: { createdAt: { gte: startOfMonth }, status: { not: 'CANCELLED' } }, select: { total: true } }),
-      prisma.order.findMany({ where: { createdAt: { gte: startOfLastMonth, lte: endOfLastMonth }, status: { not: 'CANCELLED' } }, select: { total: true } }),
+
+      // Receita do mês — só pedidos válidos
+      prisma.order.aggregate({
+        where: {
+          status:    { in: VALID_STATUS },
+          createdAt: { gte: start },
+        },
+        _sum: { total: true },
+      }),
+
+      // Total de pedidos do mês
+      prisma.order.count({
+        where: { createdAt: { gte: start } },
+      }),
+
+      // Produtos ativos
       prisma.product.count({ where: { isActive: true } }),
+
+      // Total de clientes
       prisma.customer.count(),
-      prisma.order.findMany({ take: 8, orderBy: { createdAt: 'desc' }, include: { items: { take: 1 }, payment: { select: { status: true } } } }),
-      prisma.orderItem.groupBy({
-        by: ['productId', 'productName'],
-        _sum: { quantity: true },
-        orderBy: { _sum: { quantity: 'desc' } },
-        take: 5,
+
+      // Pedidos recentes (últimos 5)
+      prisma.order.findMany({
+        take:    5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id:           true,
+          orderNumber:  true,
+          status:       true,
+          total:        true,
+          createdAt:    true,
+          deliveryType: true,
+        },
+      }),
+
+      // Itens de pedidos com status válido
+      prisma.orderItem.findMany({
+        where: {
+          order: { status: { in: VALID_STATUS } },
+        },
+        select: {
+          productId:   true,
+          productName: true,
+          quantity:    true,
+        },
+      }),
+
+      // Vendas do balcão
+      prisma.sale.findMany({
+        where: { type: 'PRESENTIAL' },
+        select: {
+          productId:   true,
+          productName: true,
+          quantity:    true,
+        },
       }),
     ])
 
-    const monthRevenue = monthOrders.reduce((s, o) => s + Number(o.total), 0)
-    const lastMonthRevenue = lastMonthOrders.reduce((s, o) => s + Number(o.total), 0)
-    const revenueGrowth = lastMonthRevenue > 0 ? ((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0
-    const avgTicket = totalOrders > 0 ? monthRevenue / (monthOrders.length || 1) : 0
+    // Combinar e agrupar produtos mais vendidos
+    const mapa = new Map<string, { name: string; qty: number }>()
+
+    for (const item of orderItems) {
+      const key  = item.productId || item.productName
+      const prev = mapa.get(key)
+      if (prev) prev.qty += item.quantity
+      else mapa.set(key, { name: item.productName, qty: item.quantity })
+    }
+
+    for (const sale of balcaoSales) {
+      const key  = sale.productId || sale.productName
+      const prev = mapa.get(key)
+      if (prev) prev.qty += sale.quantity
+      else mapa.set(key, { name: sale.productName, qty: sale.quantity })
+    }
+
+    const topProdutos = Array.from(mapa.entries())
+      .map(([id, { name, qty }]) => ({ id, name, totalVendas: qty }))
+      .sort((a, b) => b.totalVendas - a.totalVendas)
+      .slice(0, 5)
 
     return NextResponse.json({
       success: true,
       data: {
-        totalRevenue: monthRevenue,
-        totalOrders,
-        totalProducts,
-        totalCustomers,
-        revenueGrowth: Math.round(revenueGrowth * 10) / 10,
-        ordersGrowth: 0,
-        avgTicket,
-        recentOrders: recentOrders.map((o) => ({ ...o, total: Number(o.total), subtotal: Number(o.subtotal) })),
-        topProducts: topProductsRaw.map((p) => ({
-          productId: p.productId,
-          productName: p.productName,
-          total: p._sum.quantity || 0,
+        kpis: {
+          receitaMes:    Number(receitaMes._sum.total ?? 0),
+          totalPedidos,
+          produtosAtivos,
+          totalClientes,
+        },
+        pedidosRecentes: pedidosRecentes.map((p) => ({
+          ...p,
+          total:     Number(p.total),
+          createdAt: p.createdAt.toISOString(),
         })),
+        topProdutos,
       },
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erro'
-    if (msg === 'Unauthorized') return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    if (msg === 'Unauthorized') {
+      return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
+    }
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
 }
