@@ -21,6 +21,7 @@ export const productSchema = z.object({
   shortDesc: z.string().optional(),
   price: z.number().positive('Preço deve ser positivo'),
   comparePrice: z.number().positive().optional(),
+  costPrice: z.number().positive().optional(),
   stock: z.number().int().min(0),
   images: z.array(z.string().url()).min(1, 'Pelo menos uma imagem'),
   isActive: z.boolean().default(true),
