@@ -110,9 +110,7 @@ export default function ProductCard({ product, className }: Props) {
             )}
           </div>
 
-          {product.stock <= 5 && product.stock > 0 && (
-            <p className="text-xs text-orange-600 mt-1">Restam apenas {product.stock} unidades!</p>
-          )}
+        
           {product.stock === 0 && (
             <p className="text-xs text-red-500 mt-1 font-medium">Fora de estoque</p>
           )}
